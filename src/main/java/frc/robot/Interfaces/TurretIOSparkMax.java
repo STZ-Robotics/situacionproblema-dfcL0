@@ -3,7 +3,10 @@ package frc.robot.Interfaces;
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkClosedLoopController.ArbFFUnits;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
@@ -15,20 +18,37 @@ public class TurretIOSparkMax implements TurretIO{
     private final SparkMax turretSpark;
     private final RelativeEncoder turretEncoder;
 
-    public TurretIOSparkMax (int kMotorId){
+    private Rotation2d currentTargetAngle = new Rotation2d();
 
-        turretSpark = new SparkMax(kMotorId, MotorType.kBrushless);
+    public TurretIOSparkMax (){
+
+        turretSpark = new SparkMax(TurretConstants.kMotorId, MotorType.kBrushless);
         turretEncoder = turretSpark.getEncoder();
         var config = new SparkMaxConfig();
 
-        //configuramos nuestros límites 
+        //configuramos nuestros límites físicos 
         config.softLimit
         .forwardSoftLimit(TurretConstants.kUpperLimit)
-        .reverseSoftLimit(TurretConstants.kLowerLimit);
+        .reverseSoftLimit(TurretConstants.kLowerLimit)
+        .forwardSoftLimitEnabled(true)
+        .reverseSoftLimitEnabled(true);
+
+
+        config.closedLoop.pid(TurretConstants.kP, TurretConstants.kI, TurretConstants.kD)
+        .outputRange(TurretConstants.kMinOutput, TurretConstants.kMaxOutput);   //limitar pid de -1 a 1
+
+
+        //configuración de feedforward para control cerrado con FF
+        config.closedLoop.feedForward.
+        kS(TurretConstants.kS).
+        kV(TurretConstants.kV).
+        kA(TurretConstants.kA);
+
 
         //conversión de velocidad y posición
-        config.encoder.velocityConversionFactor(1/(20*60)); //Es 20:1, RPM a RPS
-        config.encoder.positionConversionFactor(1/20); //rotaciones del motor a rotaciones de mi mecanismo  
+        config.encoder.velocityConversionFactor(TurretConstants.kVelocityFactor); //Es 20:1, RPM a RPS
+        config.encoder.positionConversionFactor(TurretConstants.kPositionFactor); //rotaciones del motor a rotaciones de mi mecanismo  
+
         
         //aplicar configuración 
         turretSpark.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -38,17 +58,25 @@ public class TurretIOSparkMax implements TurretIO{
     @Override
     public void setVoltage(double appliedVolts){
         turretSpark.setVoltage(appliedVolts);
+    }   
+
+    @Override
+    public void setPosition(Rotation2d currentAngle){
+        this.currentTargetAngle = currentAngle;
+        turretSpark.getClosedLoopController().setSetpoint(
+            currentAngle.getRotations(), //turret trabaja en rotaciones
+            ControlType.kPosition); //posición, ir a angulo específico
     }
 
     @Override
-    public void setPosition(Rotation2d targetAngle){
-        turretEncoder.setPosition(targetAngle.getRotations());
+    public void setDutyCycle(double percentage){
+        turretSpark.set(percentage);
     }
 
     @Override
-    public void setPositionWithFF(Rotation2d targetAngle, double velocityRPS){
-        //* 
-
+    public void setPositionWithFF(Rotation2d currentAngle, double feedforward){
+        this.currentTargetAngle = currentAngle;
+        turretSpark.getClosedLoopController().setSetpoint(currentAngle.getRotations(), ControlType.kPosition, ClosedLoopSlot.kSlot0,feedforward,ArbFFUnits.kVoltage);
     }
 
     @Override
@@ -69,7 +97,8 @@ public class TurretIOSparkMax implements TurretIO{
     @Override
     public void updateInputs(TurretInputs inputs){
 
-        inputs.currentAngle = Rotation2d.fromRotations(turretEncoder.getPosition()); //nos pide el valor en rotation2d, realizamos conversión, puede pasarse a negativo si es necesario
+        inputs.currentAngle = Rotation2d.fromRotations(-turretEncoder.getPosition()); //nos pide el valor en rotation2d, realizamos conversión, puede pasarse a negativo si es necesario
+        inputs.targetAngle = this.currentTargetAngle; //el objetivo actual que le estamos pidiendo a la torreta
         inputs.velocityRPS = turretEncoder.getVelocity();
         inputs.appliedVolts = turretSpark.getAppliedOutput()*turretSpark.getBusVoltage();
         inputs.current = turretSpark.getOutputCurrent();

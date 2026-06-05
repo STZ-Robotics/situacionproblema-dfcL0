@@ -31,7 +31,7 @@ public class OperatorBindings implements Binding {
         new Trigger(() -> Math.abs(leftStick.x().getAsDouble()) > 0.1)
          .and(padButtons.right())
          .whileTrue(
-             turret.setControl(() -> TurretRequestFactory.manual(leftStick.x()))
+             turret.setControl(() -> TurretRequestFactory.manual().withVel(leftStick.x()))
         );
 
     }

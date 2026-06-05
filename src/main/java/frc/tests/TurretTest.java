@@ -23,7 +23,7 @@ public class TurretTest extends TestRoutine{
     public Command getRoutineCommand(){
         return Commands.sequence(
             run(
-                TurretRequestFactory.position(Rotation2d.fromDegrees(45),2.0) , tur),
+                TurretRequestFactory.position().withTarget(Rotation2d.fromDegrees(45)).withTolerance(2) , tur),
 
             waitFor(() -> tur.isAtTarget(2.0), 2),
             
@@ -33,7 +33,7 @@ public class TurretTest extends TestRoutine{
             ),
 
             run(
-                TurretRequestFactory.position(Rotation2d.fromDegrees(-45), 2.0), tur),
+                TurretRequestFactory.position().withTarget(Rotation2d.fromDegrees(-45)).withTolerance(2), tur),
 
             waitFor(() -> tur.isAtTarget(2.0), 2),
 
@@ -43,7 +43,7 @@ public class TurretTest extends TestRoutine{
             ),
 
             run(
-                TurretRequestFactory.position(Rotation2d.fromDegrees(0), 2.0), tur),
+                TurretRequestFactory.position().withTarget(Rotation2d.fromDegrees(0)).withTolerance(2), tur),
 
             waitFor(() -> tur.isAtTarget(2.0), 2),
 

@@ -38,9 +38,9 @@ public interface TurretRequest extends Request<TurretInputs, TurretIO> {
 
         private DoubleSupplier velocityJoystick;
 
-        public Manual (DoubleSupplier velocityJoystick) {  // como el override solo usa data y actor, añadimos el joystick al contructor
-            this.velocityJoystick = velocityJoystick; 
-            
+        public Manual withVel(DoubleSupplier v){
+            this.velocityJoystick = v;
+            return this;
         }
 
         @Override 
@@ -65,11 +65,16 @@ public interface TurretRequest extends Request<TurretInputs, TurretIO> {
     public static class Position implements TurretRequest {
 
         private Rotation2d target;
-        private double tolerance;
+        private double tolerance = 0.1;
 
-        public Position (Rotation2d target, double tolerance) {
-            this.target = target;
-            this.tolerance = tolerance;
+        public Position withTarget(Rotation2d r){
+            target = r;
+            return this;
+        }
+
+        public Position withTolerance(double t){
+            tolerance = t;
+            return this;
         }
 
         @Override

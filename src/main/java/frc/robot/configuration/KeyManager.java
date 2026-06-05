@@ -7,6 +7,7 @@ public class KeyManager {
     private KeyManager() {}
 
     public static final String myKey = "TestKey";
+    public static final String TURRET_KEY = "Turret Key";
     public static final BlackboardKey<String> myBlackboardKey = new BlackboardKey<>(myKey, String.class);
     public static final BlackboardKey<Double> myBlackBoardKeyDouble = new BlackboardKey<>(myKey, Double.class);
     public static final BlackboardKey<Boolean> myBlackBoardKeyBoolean = new BlackboardKey<>(myKey, Boolean.class);

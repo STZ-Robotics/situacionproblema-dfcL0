@@ -16,7 +16,9 @@ public interface TurretIO extends IO<TurretIO.TurretInputs> {
         public double velocityRPS = 0.0;
         public double appliedVolts = 0.0;
         public double current = 0.0;
+        public double latency = 0.0;
 
+        //hace copias de los datos
         public TurretInputs snapshot() {
             TurretInputs copy = new TurretInputs();
 

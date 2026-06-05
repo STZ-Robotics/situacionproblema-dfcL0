@@ -104,7 +104,7 @@ public class TurretIOSparkMax implements TurretIO{
         inputs.current = turretSpark.getOutputCurrent();
 
         
-    }
+    }   
 
 
     
